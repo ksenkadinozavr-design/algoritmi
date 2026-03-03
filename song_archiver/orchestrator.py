@@ -13,6 +13,9 @@ def process_playlist_file(
     archive_name: str = "songs_archive",
     min_score: float = 0.78,
     proxy_url: str | None = None,
+    cookies_path: str | None = None,
+    cookies_from_browser: str | None = None,
+    js_runtime: str | None = None,
 ) -> Path:
     """Parse, validate all songs, download, then archive as zip.
 
@@ -29,7 +32,14 @@ def process_playlist_file(
 
     for song in songs:
         try:
-            result = search_song(song, min_score=min_score, proxy_url=proxy_url)
+            result = search_song(
+                song,
+                min_score=min_score,
+                proxy_url=proxy_url,
+                cookies_path=cookies_path,
+                cookies_from_browser=cookies_from_browser,
+                js_runtime=js_runtime,
+            )
             matches.append(result)
             print(f"  [OK] {song.query} -> {result.video_title} (score={result.score:.2f})")
         except DependencyError as exc:
@@ -41,7 +51,7 @@ def process_playlist_file(
     if errors:
         joined = "\n".join(errors)
         raise DownloadError(
-            "Строгая валидация не пройдена. Исправьте входной файл, прокси или снизьте --min-score.\n" + joined
+            "Строгая валидация не пройдена. Исправьте входной файл, прокси/cookies или снизьте --min-score.\n" + joined
         )
 
     downloads_dir = root / "songs"
@@ -50,7 +60,14 @@ def process_playlist_file(
     downloads_dir.mkdir(parents=True, exist_ok=True)
 
     for result in matches:
-        download_song(result, downloads_dir, proxy_url=proxy_url)
+        download_song(
+            result,
+            downloads_dir,
+            proxy_url=proxy_url,
+            cookies_path=cookies_path,
+            cookies_from_browser=cookies_from_browser,
+            js_runtime=js_runtime,
+        )
 
     archive_base = root / archive_name
     archive_path = Path(shutil.make_archive(str(archive_base), "zip", downloads_dir))

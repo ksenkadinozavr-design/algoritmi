@@ -50,6 +50,20 @@
           </div>
         </div>
 
+        <div class="row">
+          <div>
+            <label for="cookies_file">Cookies файл (cookies.txt)</label>
+            <input id="cookies_file" name="cookies_file" placeholder="C:\\path\\youtube_cookies.txt" />
+          </div>
+          <div>
+            <label for="cookies_from_browser">Cookies из браузера</label>
+            <input id="cookies_from_browser" name="cookies_from_browser" placeholder="chrome / edge / firefox" />
+          </div>
+        </div>
+
+        <label for="js_runtime">JS runtime для yt-dlp</label>
+        <input id="js_runtime" name="js_runtime" value="node" />
+
         <button type="submit">Найти, скачать и собрать ZIP</button>
       </form>
 

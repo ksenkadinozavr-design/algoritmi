@@ -31,31 +31,71 @@ def _load_youtube_dl():
         ) from exc
 
 
-def _with_proxy(options: dict, proxy_url: str | None) -> dict:
+def _build_ydl_options(
+    *,
+    base: dict,
+    proxy_url: str | None = None,
+    cookies_path: str | None = None,
+    cookies_from_browser: str | None = None,
+    js_runtime: str | None = None,
+) -> dict:
+    options = dict(base)
     if proxy_url:
         options["proxy"] = proxy_url
+    if cookies_path:
+        options["cookiefile"] = cookies_path
+    if cookies_from_browser:
+        options["cookiesfrombrowser"] = (cookies_from_browser,)
+    if js_runtime:
+        options["js_runtimes"] = [js_runtime]
     return options
 
 
 def _wrap_network_error(exc: Exception) -> DownloadError:
     message = str(exc)
-    if "WinError 10054" in message or "Unable to download" in message or "TransportError" in message:
+    lowered = message.lower()
+
+    if "sign in to confirm you’re not a bot" in lowered or "sign in to confirm you're not a bot" in lowered:
+        return DownloadError(
+            "YouTube требует подтверждение 'not a bot'. Добавьте cookies: --cookies-file PATH или "
+            "--cookies-from-browser chrome. Детали: "
+            f"{message}"
+        )
+
+    if "no supported javascript runtime" in lowered:
+        return DownloadError(
+            "yt-dlp не нашел JS runtime для YouTube. Установите Node.js и запустите с --js-runtime node. "
+            f"Детали: {message}"
+        )
+
+    if "winerror 10054" in lowered or "unable to download" in lowered or "transporterror" in lowered:
         return DownloadError(
             "Сетевая ошибка при обращении к YouTube. Проверьте прокси (--proxy) и доступ в интернет. "
             f"Детали: {message}"
         )
+
     return DownloadError(message)
 
 
-def search_song(song: SongRequest, min_score: float = 0.78, proxy_url: str | None = None) -> SearchResult:
-    ydl_opts = _with_proxy(
-        {
+def search_song(
+    song: SongRequest,
+    min_score: float = 0.78,
+    proxy_url: str | None = None,
+    cookies_path: str | None = None,
+    cookies_from_browser: str | None = None,
+    js_runtime: str | None = None,
+) -> SearchResult:
+    ydl_opts = _build_ydl_options(
+        base={
             "quiet": True,
             "skip_download": True,
             "extract_flat": False,
             "retries": 3,
         },
-        proxy_url,
+        proxy_url=proxy_url,
+        cookies_path=cookies_path,
+        cookies_from_browser=cookies_from_browser,
+        js_runtime=js_runtime,
     )
 
     youtube_dl = _load_youtube_dl()
@@ -95,15 +135,22 @@ def search_song(song: SongRequest, min_score: float = 0.78, proxy_url: str | Non
     return best
 
 
-def download_song(result: SearchResult, output_dir: Path, proxy_url: str | None = None) -> Path:
+def download_song(
+    result: SearchResult,
+    output_dir: Path,
+    proxy_url: str | None = None,
+    cookies_path: str | None = None,
+    cookies_from_browser: str | None = None,
+    js_runtime: str | None = None,
+) -> Path:
     group_dir = output_dir / _safe_name(result.song.group)
     group_dir.mkdir(parents=True, exist_ok=True)
 
     filename = _safe_name(result.song.title)
     target_template = str(group_dir / f"{filename}.%(ext)s")
 
-    ydl_opts = _with_proxy(
-        {
+    ydl_opts = _build_ydl_options(
+        base={
             "format": "bestaudio/best",
             "outtmpl": target_template,
             "noplaylist": True,
@@ -111,7 +158,10 @@ def download_song(result: SearchResult, output_dir: Path, proxy_url: str | None 
             "retries": 3,
             "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"}],
         },
-        proxy_url,
+        proxy_url=proxy_url,
+        cookies_path=cookies_path,
+        cookies_from_browser=cookies_from_browser,
+        js_runtime=js_runtime,
     )
 
     url = f"https://www.youtube.com/watch?v={result.video_id}"

@@ -5,10 +5,10 @@ from pathlib import Path
 
 from flask import Flask, flash, redirect, render_template, request, send_file, url_for
 
+from main import _build_proxy_url
 from song_archiver.downloader import DownloadError
 from song_archiver.orchestrator import process_playlist_file
 from song_archiver.parser import ParseError
-from main import _build_proxy_url
 
 
 def create_app() -> Flask:
@@ -28,6 +28,9 @@ def create_app() -> Flask:
         proxy = request.form.get("proxy", "").strip()
         proxy_user = request.form.get("proxy_user", "").strip()
         proxy_password = request.form.get("proxy_password", "").strip()
+        cookies_file = request.form.get("cookies_file", "").strip()
+        cookies_from_browser = request.form.get("cookies_from_browser", "").strip()
+        js_runtime = request.form.get("js_runtime", "node").strip() or "node"
 
         if not songs_text:
             flash("Добавьте список песен в поле текста.", "error")
@@ -56,6 +59,9 @@ def create_app() -> Flask:
                 archive_name=archive_name,
                 min_score=min_score,
                 proxy_url=_build_proxy_url(proxy, proxy_user, proxy_password),
+                cookies_path=cookies_file or None,
+                cookies_from_browser=cookies_from_browser or None,
+                js_runtime=js_runtime,
             )
         except (ParseError, DownloadError) as exc:
             flash(str(exc), "error")

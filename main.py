@@ -23,6 +23,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--proxy", help="Прокси в формате host:port или http://user:pass@host:port")
     parser.add_argument("--proxy-user", help="Логин для прокси (если нужен)")
     parser.add_argument("--proxy-password", help="Пароль для прокси (если нужен)")
+    parser.add_argument("--cookies-file", help="Путь к cookies.txt для YouTube (Netscape format)")
+    parser.add_argument("--cookies-from-browser", help="Имя браузера для cookies (например: chrome, firefox, edge)")
+    parser.add_argument("--js-runtime", default="node", help="JS runtime для yt-dlp (по умолчанию: node)")
     parser.add_argument(
         "--interactive",
         action="store_true",
@@ -72,6 +75,18 @@ def run_interactive(args: argparse.Namespace) -> argparse.Namespace:
             args.proxy_user = proxy_user
             args.proxy_password = input("Прокси пароль: ").strip()
 
+    cookies_file = input("Cookies файл для YouTube (Enter если не нужен): ").strip()
+    if cookies_file:
+        args.cookies_file = _normalize_path_value(cookies_file)
+
+    cookies_browser = input("Cookies из браузера (chrome/firefox/edge, Enter если не нужен): ").strip()
+    if cookies_browser:
+        args.cookies_from_browser = cookies_browser
+
+    custom_js_runtime = input(f"JS runtime [{args.js_runtime}]: ").strip()
+    if custom_js_runtime:
+        args.js_runtime = custom_js_runtime
+
     custom_archive = input(f"Имя архива [{args.archive_name}]: ").strip()
     if custom_archive:
         args.archive_name = custom_archive
@@ -92,6 +107,8 @@ def main() -> int:
         args.input = _normalize_path_value(args.input)
     if args.output:
         args.output = _normalize_path_value(args.output)
+    if args.cookies_file:
+        args.cookies_file = _normalize_path_value(args.cookies_file)
 
     if not args.input:
         parser.error("Укажите --input путь к файлу")
@@ -105,6 +122,9 @@ def main() -> int:
             archive_name=args.archive_name,
             min_score=args.min_score,
             proxy_url=proxy_url,
+            cookies_path=args.cookies_file,
+            cookies_from_browser=args.cookies_from_browser,
+            js_runtime=args.js_runtime,
         )
     except DownloadError as exc:
         print(f"Ошибка: {exc}")

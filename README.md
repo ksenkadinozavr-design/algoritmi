@@ -57,6 +57,9 @@ python main.py --interactive
 - `--min-score` — порог совпадения (0..1), по умолчанию `0.78`.
 - `--proxy` — прокси: `host:port` или полный URL `http://user:pass@host:port`.
 - `--proxy-user`, `--proxy-password` — логин/пароль прокси.
+- `--cookies-file` — путь к `cookies.txt` (Netscape format) для обхода YouTube anti-bot.
+- `--cookies-from-browser` — взять cookies из браузера (`chrome`, `edge`, `firefox`).
+- `--js-runtime` — JS runtime для yt-dlp (рекомендуется `node`).
 
 
 ### Пример запуска с прокси
@@ -67,6 +70,18 @@ python main.py --input songs.txt --output downloads --archive-name songs --min-s
 ```
 
 Если прокси не нужен, просто не указывайте эти параметры.
+
+### Пример запуска с cookies (когда YouTube просит "Sign in to confirm you're not a bot")
+
+```bash
+python main.py --input songs.txt --cookies-file "C:\\Users\\edmir\\youtube_cookies.txt" --js-runtime node
+```
+
+или
+
+```bash
+python main.py --input songs.txt --cookies-from-browser chrome --js-runtime node
+```
 
 ## Веб-интерфейс
 
