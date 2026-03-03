@@ -47,7 +47,7 @@ def _build_ydl_options(
     if cookies_from_browser:
         options["cookiesfrombrowser"] = (cookies_from_browser,)
     if js_runtime:
-        options["js_runtimes"] = [js_runtime]
+        options["js_runtimes"] = {js_runtime: {}}
     return options
 
 

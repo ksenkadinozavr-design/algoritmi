@@ -38,4 +38,4 @@ def test_build_ydl_options_adds_proxy_and_cookies() -> None:
     assert opts["proxy"] == "http://user:pass@127.0.0.1:8080"
     assert opts["cookiefile"] == "cookies.txt"
     assert opts["cookiesfrombrowser"] == ("chrome",)
-    assert opts["js_runtimes"] == ["node"]
+    assert opts["js_runtimes"] == {"node": {}}
