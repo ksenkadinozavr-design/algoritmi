@@ -36,3 +36,10 @@ def test_build_ydl_options_adds_proxy() -> None:
 def test_song_request_can_be_without_source_url_for_search_fallback() -> None:
     song = SongRequest(group="Kino", title="Gruppa Krovi")
     assert song.source_url is None
+
+
+def test_search_song_rejects_youtube_source_url() -> None:
+    with pytest.raises(DownloadError, match="YouTube-ссылки отключены"):
+        from song_archiver.downloader import search_song
+
+        search_song(SongRequest(group="A", title="B", source_url="https://youtube.com/watch?v=1"))

@@ -31,7 +31,7 @@ def create_app() -> Flask:
         min_score_raw = request.form.get("min_score", "0.78").strip()
         max_attempts_raw = request.form.get("max_attempts", "5").strip()
         archive_name = request.form.get("archive_name", "songs_archive").strip() or "songs_archive"
-        providers_raw = request.form.get("search_providers", "scsearch,bandcampsearch,ytsearch").strip()
+        providers_raw = request.form.get("search_providers", "scsearch,bandcampsearch").strip()
         proxy = request.form.get("proxy", DEFAULT_PROXY_HOST).strip()
         proxy_user = request.form.get("proxy_user", DEFAULT_PROXY_USER).strip()
         proxy_password = request.form.get("proxy_password", DEFAULT_PROXY_PASSWORD).strip()

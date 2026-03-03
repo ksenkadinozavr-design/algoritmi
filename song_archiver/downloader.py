@@ -15,7 +15,7 @@ class DependencyError(DownloadError):
     pass
 
 
-DEFAULT_SEARCH_PROVIDERS = ("scsearch", "bandcampsearch", "ytsearch")
+DEFAULT_SEARCH_PROVIDERS = ("scsearch", "bandcampsearch")
 
 
 def _safe_name(value: str) -> str:
@@ -53,6 +53,12 @@ def _wrap_network_error(exc: Exception) -> DownloadError:
     return DownloadError(message)
 
 
+
+
+def _is_youtube_url(value: str) -> bool:
+    lowered = value.lower()
+    return "youtube.com" in lowered or "youtu.be" in lowered
+
 def _extract_first_entry(info: dict) -> dict | None:
     entries = info.get("entries") or []
     return next((entry for entry in entries if entry), None)
@@ -76,11 +82,11 @@ def _search_by_providers(song: SongRequest, *, proxy_url: str | None, providers:
                 continue
 
             url = first.get("webpage_url")
-            if not url and first.get("id") and first.get("extractor") == "youtube":
-                url = f"https://www.youtube.com/watch?v={first['id']}"
             if not url and first.get("url"):
                 url = first["url"]
             if not url:
+                continue
+            if _is_youtube_url(url):
                 continue
 
             return SearchResult(
@@ -104,9 +110,10 @@ def search_song(
     search_providers: tuple[str, ...] = DEFAULT_SEARCH_PROVIDERS,
 ) -> SearchResult:
     """Find song source by direct URL or provider search across audio websites."""
-    youtube_dl = _load_youtube_dl()
-
     if song.source_url:
+        if _is_youtube_url(song.source_url):
+            raise DownloadError("YouTube-ссылки отключены. Используйте ссылки с других сайтов.")
+        youtube_dl = _load_youtube_dl()
         ydl_opts = _build_ydl_options(
             base={"quiet": True, "skip_download": True, "extract_flat": False, "retries": 3},
             proxy_url=proxy_url,

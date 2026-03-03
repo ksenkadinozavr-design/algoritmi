@@ -15,7 +15,7 @@ def process_playlist_file(
     min_score: float = 0.78,
     proxy_url: str | None = None,
     max_attempts: int = 5,
-    search_providers: tuple[str, ...] = ("scsearch", "bandcampsearch", "ytsearch"),
+    search_providers: tuple[str, ...] = ("scsearch", "bandcampsearch"),
 ) -> Path:
     """Parse songs and keep trying search+download for each song until success or attempts exhausted."""
     _ = min_score  # kept for backward-compatible CLI args

@@ -34,8 +34,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-attempts", type=int, default=5, help="Максимум попыток на одну песню")
     parser.add_argument(
         "--search-providers",
-        default="scsearch,bandcampsearch,ytsearch",
-        help="Провайдеры поиска через yt-dlp (через запятую), например: scsearch,bandcampsearch,ytsearch",
+        default="scsearch,bandcampsearch",
+        help="Провайдеры поиска через yt-dlp (через запятую), например: scsearch,bandcampsearch",
     )
     parser.add_argument(
         "--interactive",
