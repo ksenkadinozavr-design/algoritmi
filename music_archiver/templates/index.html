@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Song Archiver</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Song Archiver</h1>
+      <p>Вставьте список песен и получите единый ZIP архив.</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="alerts">
+        {% for category, message in messages %}
+        <div class="alert {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% endwith %}
+
+      <form action="{{ url_for('build_archive') }}" method="post">
+        <label for="songs_text">Список песен</label>
+        <textarea id="songs_text" name="songs_text" rows="14" placeholder="[Linkin Park]\nNumb\nIn The End\n\nAdele - Hello"></textarea>
+
+        <div class="row">
+          <div>
+            <label for="archive_name">Имя архива</label>
+            <input id="archive_name" name="archive_name" value="songs_archive" />
+          </div>
+          <div>
+            <label for="min_score">Min score (0..1)</label>
+            <input id="min_score" name="min_score" value="0.78" />
+          </div>
+        </div>
+
+        <label for="proxy">Прокси (host:port или http://user:pass@host:port)</label>
+        <input id="proxy" name="proxy" placeholder="154.218.23.64:62794" />
+
+        <div class="row">
+          <div>
+            <label for="proxy_user">Прокси логин</label>
+            <input id="proxy_user" name="proxy_user" placeholder="username" />
+          </div>
+          <div>
+            <label for="proxy_password">Прокси пароль</label>
+            <input id="proxy_password" name="proxy_password" type="password" placeholder="password" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="cookies_file">Cookies файл (cookies.txt)</label>
+            <input id="cookies_file" name="cookies_file" placeholder="C:\\path\\youtube_cookies.txt" />
+          </div>
+          <div>
+            <label for="cookies_from_browser">Cookies из браузера</label>
+            <input id="cookies_from_browser" name="cookies_from_browser" placeholder="chrome / edge / firefox" />
+          </div>
+        </div>
+
+        <label for="js_runtime">JS runtime для yt-dlp</label>
+        <input id="js_runtime" name="js_runtime" value="node" />
+
+        <button type="submit">Найти, скачать и собрать ZIP</button>
+      </form>
+
+      <section>
+        <h2>Поддерживаемые форматы</h2>
+        <pre>[Group]
+Song 1
+Song 2
+
+Group: Another Group
+- Song 3
+
+Artist - Song 4</pre>
+      </section>
+    </main>
+  </body>
+</html>
