@@ -28,14 +28,21 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _normalize_path_value(value: str) -> str:
+    normalized = value.strip()
+    if len(normalized) >= 2 and normalized[0] == normalized[-1] and normalized[0] in {"\"", "'"}:
+        normalized = normalized[1:-1].strip()
+    return normalized
+
+
 def run_interactive(args: argparse.Namespace) -> argparse.Namespace:
     print("=== Song Archiver ===")
     if not args.input:
-        args.input = input("Путь к txt-файлу: ").strip()
+        args.input = _normalize_path_value(input("Путь к txt-файлу: "))
     if args.output == "downloads":
         custom_output = input("Директория для результатов [downloads]: ").strip()
         if custom_output:
-            args.output = custom_output
+            args.output = _normalize_path_value(custom_output)
     custom_archive = input(f"Имя архива [{args.archive_name}]: ").strip()
     if custom_archive:
         args.archive_name = custom_archive
@@ -51,6 +58,11 @@ def main() -> int:
 
     if args.interactive:
         args = run_interactive(args)
+
+    if args.input:
+        args.input = _normalize_path_value(args.input)
+    if args.output:
+        args.output = _normalize_path_value(args.output)
 
     if not args.input:
         parser.error("Укажите --input путь к файлу")
