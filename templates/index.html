@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Music Archiver</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 780px; margin: 32px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 18px; }
+    .error { background: #ffe8e8; border: 1px solid #ffb8b8; padding: 10px; border-radius: 8px; white-space: pre-wrap; }
+    code { background: #f4f4f4; padding: 2px 5px; border-radius: 4px; }
+    button { background: #0d6efd; color: #fff; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Music Archiver</h1>
+  <div class="card">
+    <p>Загрузите текстовый файл в формате:</p>
+    <pre><code>[Любимая группа]
+Imagine Dragons - Believer
+The Weeknd - Blinding Lights
+
+[Спокойное]
+Lana Del Rey - Summertime Sadness</code></pre>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <p class="{{ category }}">{{ message }}</p>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form action="/process" method="post" enctype="multipart/form-data">
+      <input type="file" name="songs_file" accept=".txt" required />
+      <button type="submit">Найти и скачать архив</button>
+    </form>
+  </div>
+</body>
+</html>
