@@ -1,0 +1,46 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f7f7f9;
+  margin: 0;
+}
+.container {
+  max-width: 820px;
+  margin: 24px auto;
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+}
+textarea,
+input {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 6px 0 14px;
+  padding: 10px;
+}
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+button {
+  background: #2563eb;
+  color: white;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+.alert {
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+.alert.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+pre {
+  background: #f3f4f6;
+  padding: 10px;
+  border-radius: 8px;
+}
