@@ -1,0 +1,12 @@
+# Формат 1
+[Linkin Park]
+Numb
+In The End
+
+# Формат 2
+Group: Imagine Dragons
+- Believer
+- Demons
+
+# Формат 3
+Adele - Hello
