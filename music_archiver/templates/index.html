@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Song Archiver</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Song Archiver</h1>
+      <p>Загрузите список песен с прямыми ссылками и получите ZIP архив.</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="alerts">
+        {% for category, message in messages %}
+        <div class="alert {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% endwith %}
+
+      <form action="{{ url_for('build_archive') }}" method="post">
+        <label for="songs_text">Список песен</label>
+        <textarea id="songs_text" name="songs_text" rows="14" placeholder="[Кино]\nГруппа крови | https://site/track1\nПачка сигарет | https://site/track2"></textarea>
+
+        <div class="row">
+          <div>
+            <label for="archive_name">Имя архива</label>
+            <input id="archive_name" name="archive_name" value="songs_archive" />
+          </div>
+          <div>
+            <label for="min_score">Min score (мягкий режим, влияет минимально)</label>
+            <input id="min_score" name="min_score" value="0.78" />
+          </div>
+        </div>
+
+        <label for="proxy">Прокси (host:port или http://user:pass@host:port)</label>
+        <input id="proxy" name="proxy" value="{{ default_proxy }}" />
+
+        <div class="row">
+          <div>
+            <label for="proxy_user">Прокси логин</label>
+            <input id="proxy_user" name="proxy_user" value="{{ default_proxy_user }}" />
+          </div>
+          <div>
+            <label for="proxy_password">Прокси пароль</label>
+            <input id="proxy_password" name="proxy_password" type="password" value="{{ default_proxy_password }}" />
+          </div>
+        </div>
+
+        <label for="max_attempts">Повторные попытки на песню</label>
+        <input id="max_attempts" name="max_attempts" value="5" />
+
+        <label for="search_providers">Провайдеры поиска (через запятую)</label>
+        <input id="search_providers" name="search_providers" value="scsearch,bandcampsearch" />
+
+        <button type="submit">Искать и скачивать до успеха (в пределах попыток)</button>
+      </form>
+
+      <section>
+        <h2>Поддерживаемые форматы</h2>
+        <pre>[Group]
+Song 1 | https://site/track1
+Song 2 | https://site/track2
+
+Artist - Song 3 | https://site/track3</pre>
+      </section>
+    </main>
+  </body>
+</html>
