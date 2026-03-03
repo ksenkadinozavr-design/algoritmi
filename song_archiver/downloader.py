@@ -70,7 +70,7 @@ def _wrap_network_error(exc: Exception) -> DownloadError:
 
     if "winerror 10054" in lowered or "unable to download" in lowered or "transporterror" in lowered:
         return DownloadError(
-            "Сетевая ошибка при обращении к YouTube. Проверьте прокси (--proxy) и доступ в интернет. "
+            "Сетевая ошибка при обращении к источнику аудио. Проверьте прокси (--proxy) и доступ в интернет. "
             f"Детали: {message}"
         )
 
@@ -85,6 +85,16 @@ def search_song(
     cookies_from_browser: str | None = None,
     js_runtime: str | None = None,
 ) -> SearchResult:
+    if song.source_url:
+        return SearchResult(
+            song=song,
+            video_id=song.source_url,
+            video_title=song.title,
+            uploader=song.group,
+            duration_seconds=None,
+            score=1.0,
+        )
+
     ydl_opts = _build_ydl_options(
         base={
             "quiet": True,
@@ -164,7 +174,7 @@ def download_song(
         js_runtime=js_runtime,
     )
 
-    url = f"https://www.youtube.com/watch?v={result.video_id}"
+    url = result.video_id if result.video_id.startswith("http://") or result.video_id.startswith("https://") else f"https://www.youtube.com/watch?v={result.video_id}"
     youtube_dl = _load_youtube_dl()
 
     try:

@@ -9,6 +9,13 @@ class ParseError(ValueError):
     pass
 
 
+def _extract_title_and_url(value: str) -> tuple[str, str | None]:
+    if " | " in value:
+        title, url = [part.strip() for part in value.split(" | ", 1)]
+        return title, url or None
+    return value.strip(), None
+
+
 def parse_song_list(path: str | Path) -> list[SongRequest]:
     """Parse text file with groups and song titles.
 
@@ -16,6 +23,8 @@ def parse_song_list(path: str | Path) -> list[SongRequest]:
     1) [Group Name]\nSong 1\nSong 2
     2) Group: Group Name\n- Song 1\n- Song 2
     3) Group Name - Song Title (single line)
+    4) Group Name - Song Title | https://site/track
+    5) Inside group: Song Title | https://site/track
     """
 
     file_path = Path(path)
@@ -45,9 +54,10 @@ def parse_song_list(path: str | Path) -> list[SongRequest]:
         cleaned = line.removeprefix("-").strip()
 
         if " - " in cleaned and not line.startswith("-"):
-            group, title = [item.strip() for item in cleaned.split(" - ", 1)]
+            group, title_and_url = [item.strip() for item in cleaned.split(" - ", 1)]
+            title, source_url = _extract_title_and_url(title_and_url)
             if group and title:
-                songs.append(SongRequest(group=group, title=title))
+                songs.append(SongRequest(group=group, title=title, source_url=source_url))
                 continue
 
         if current_group is None:
@@ -55,10 +65,11 @@ def parse_song_list(path: str | Path) -> list[SongRequest]:
                 f"Строка {line_no} не относится к группе. Используйте [Group], Group: или формат 'Group - Song'."
             )
 
-        if not cleaned:
+        title, source_url = _extract_title_and_url(cleaned)
+        if not title:
             raise ParseError(f"Пустое название песни в строке {line_no}")
 
-        songs.append(SongRequest(group=current_group, title=cleaned))
+        songs.append(SongRequest(group=current_group, title=title, source_url=source_url))
 
     if not songs:
         raise ParseError("В файле не найдено ни одной песни")

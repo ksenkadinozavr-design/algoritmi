@@ -39,3 +39,14 @@ def test_build_ydl_options_adds_proxy_and_cookies() -> None:
     assert opts["cookiefile"] == "cookies.txt"
     assert opts["cookiesfrombrowser"] == ("chrome",)
     assert opts["js_runtimes"] == {"node": {}}
+
+
+def test_search_song_uses_direct_source_url_without_yt_dlp() -> None:
+    from song_archiver.downloader import search_song
+    from song_archiver.models import SongRequest
+
+    song = SongRequest(group="Kino", title="Gruppa Krovi", source_url="https://example.com/track")
+    result = search_song(song)
+
+    assert result.video_id == "https://example.com/track"
+    assert result.score == 1.0

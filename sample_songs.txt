@@ -10,3 +10,8 @@ Group: Imagine Dragons
 
 # Формат 3
 Adele - Hello
+
+# Прямые ссылки (любой поддерживаемый сайтом yt-dlp источник)
+Кино - Группа крови | https://example.com/track1
+[ДДТ]
+Родина | https://example.com/track2

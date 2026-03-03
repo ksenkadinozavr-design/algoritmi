@@ -5,6 +5,7 @@ from dataclasses import dataclass
 class SongRequest:
     group: str
     title: str
+    source_url: str | None = None
 
     @property
     def query(self) -> str:
