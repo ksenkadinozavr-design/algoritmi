@@ -31,6 +31,7 @@ def create_app() -> Flask:
         min_score_raw = request.form.get("min_score", "0.78").strip()
         max_attempts_raw = request.form.get("max_attempts", "5").strip()
         archive_name = request.form.get("archive_name", "songs_archive").strip() or "songs_archive"
+        providers_raw = request.form.get("search_providers", "scsearch,bandcampsearch,ytsearch").strip()
         proxy = request.form.get("proxy", DEFAULT_PROXY_HOST).strip()
         proxy_user = request.form.get("proxy_user", DEFAULT_PROXY_USER).strip()
         proxy_password = request.form.get("proxy_password", DEFAULT_PROXY_PASSWORD).strip()
@@ -67,6 +68,7 @@ def create_app() -> Flask:
                 min_score=min_score,
                 proxy_url=_build_proxy_url(proxy, proxy_user, proxy_password),
                 max_attempts=max_attempts,
+                search_providers=tuple(p.strip() for p in providers_raw.split(",") if p.strip()),
             )
         except (ParseError, DownloadError) as exc:
             flash(str(exc), "error")

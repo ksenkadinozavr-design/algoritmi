@@ -15,6 +15,9 @@ class DependencyError(DownloadError):
     pass
 
 
+DEFAULT_SEARCH_PROVIDERS = ("scsearch", "bandcampsearch", "ytsearch")
+
+
 def _safe_name(value: str) -> str:
     value = re.sub(r"[\\/*?:\"<>|]", "_", value)
     return re.sub(r"\s+", " ", value).strip()
@@ -50,8 +53,57 @@ def _wrap_network_error(exc: Exception) -> DownloadError:
     return DownloadError(message)
 
 
-def search_song(song: SongRequest, proxy_url: str | None = None) -> SearchResult:
-    """Find song source for download. Less strict mode: first working match is accepted."""
+def _extract_first_entry(info: dict) -> dict | None:
+    entries = info.get("entries") or []
+    return next((entry for entry in entries if entry), None)
+
+
+def _search_by_providers(song: SongRequest, *, proxy_url: str | None, providers: tuple[str, ...]) -> SearchResult:
+    youtube_dl = _load_youtube_dl()
+    ydl_opts = _build_ydl_options(
+        base={"quiet": True, "skip_download": True, "extract_flat": False, "retries": 3},
+        proxy_url=proxy_url,
+    )
+
+    last_error = ""
+    for provider in providers:
+        query = f"{provider}5:{song.query}"
+        try:
+            with youtube_dl(ydl_opts) as ydl:
+                info = ydl.extract_info(query, download=False)
+            first = _extract_first_entry(info)
+            if not first:
+                continue
+
+            url = first.get("webpage_url")
+            if not url and first.get("id") and first.get("extractor") == "youtube":
+                url = f"https://www.youtube.com/watch?v={first['id']}"
+            if not url and first.get("url"):
+                url = first["url"]
+            if not url:
+                continue
+
+            return SearchResult(
+                song=song,
+                video_id=url,
+                video_title=first.get("title") or song.title,
+                uploader=first.get("uploader") or song.group,
+                duration_seconds=first.get("duration"),
+                score=0.5,
+            )
+        except Exception as exc:  # noqa: BLE001
+            last_error = str(exc)
+            continue
+
+    raise DownloadError(f"Не найдено кандидатов для: {song.query}. Последняя ошибка: {last_error}")
+
+
+def search_song(
+    song: SongRequest,
+    proxy_url: str | None = None,
+    search_providers: tuple[str, ...] = DEFAULT_SEARCH_PROVIDERS,
+) -> SearchResult:
+    """Find song source by direct URL or provider search across audio websites."""
     youtube_dl = _load_youtube_dl()
 
     if song.source_url:
@@ -74,35 +126,12 @@ def search_song(song: SongRequest, proxy_url: str | None = None) -> SearchResult
             score=1.0,
         )
 
-    # Fallback search (less strict): allow downloading by first result if URL isn't provided.
-    ydl_opts = _build_ydl_options(
-        base={"quiet": True, "skip_download": True, "extract_flat": False, "retries": 3},
-        proxy_url=proxy_url,
-    )
-
     try:
-        with youtube_dl(ydl_opts) as ydl:
-            info = ydl.extract_info(f"ytsearch5:{song.query}", download=False)
+        return _search_by_providers(song, proxy_url=proxy_url, providers=search_providers)
+    except DownloadError:
+        raise
     except Exception as exc:  # noqa: BLE001
         raise _wrap_network_error(exc) from exc
-
-    entries = info.get("entries") or []
-    first = next((entry for entry in entries if entry), None)
-    if not first:
-        raise DownloadError(f"Не найдено кандидатов для: {song.query}")
-
-    video_id = first.get("id")
-    if not video_id:
-        raise DownloadError(f"У найденного кандидата нет id: {song.query}")
-
-    return SearchResult(
-        song=song,
-        video_id=f"https://www.youtube.com/watch?v={video_id}",
-        video_title=first.get("title") or song.title,
-        uploader=first.get("uploader") or song.group,
-        duration_seconds=first.get("duration"),
-        score=0.5,
-    )
 
 
 def download_song(result: SearchResult, output_dir: Path, proxy_url: str | None = None) -> Path:

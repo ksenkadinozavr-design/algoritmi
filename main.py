@@ -33,6 +33,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--proxy-password", default=DEFAULT_PROXY_PASSWORD, help="Пароль для прокси")
     parser.add_argument("--max-attempts", type=int, default=5, help="Максимум попыток на одну песню")
     parser.add_argument(
+        "--search-providers",
+        default="scsearch,bandcampsearch,ytsearch",
+        help="Провайдеры поиска через yt-dlp (через запятую), например: scsearch,bandcampsearch,ytsearch",
+    )
+    parser.add_argument(
         "--interactive",
         action="store_true",
         help="Запустить небольшой интерактивный интерфейс в терминале",
@@ -105,6 +110,7 @@ def main() -> int:
         parser.error("Укажите --input путь к файлу")
 
     proxy_url = _build_proxy_url(args.proxy, args.proxy_user, args.proxy_password)
+    search_providers = tuple(p.strip() for p in args.search_providers.split(",") if p.strip())
 
     try:
         archive = process_playlist_file(
@@ -114,6 +120,7 @@ def main() -> int:
             min_score=args.min_score,
             proxy_url=proxy_url,
             max_attempts=args.max_attempts,
+            search_providers=search_providers,
         )
     except DownloadError as exc:
         print(f"Ошибка: {exc}")

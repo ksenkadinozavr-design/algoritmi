@@ -35,3 +35,4 @@ def test_parser_defaults_use_configured_proxy() -> None:
     assert args.proxy_user == DEFAULT_PROXY_USER
     assert args.proxy_password == DEFAULT_PROXY_PASSWORD
     assert args.max_attempts == 5
+    assert args.search_providers == "scsearch,bandcampsearch,ytsearch"

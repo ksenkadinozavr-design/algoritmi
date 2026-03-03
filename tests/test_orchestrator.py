@@ -10,7 +10,9 @@ def test_process_playlist_retries_until_success(tmp_path: Path, monkeypatch) -> 
 
     calls = {"search": 0, "download": 0}
 
-    def fake_search(song: SongRequest, proxy_url: str | None = None) -> SearchResult:
+    def fake_search(
+        song: SongRequest, proxy_url: str | None = None, search_providers: tuple[str, ...] = ()
+    ) -> SearchResult:
         calls["search"] += 1
         return SearchResult(song=song, video_id=song.source_url or "", video_title=song.title, uploader=song.group, duration_seconds=None, score=1)
 
