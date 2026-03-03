@@ -3,7 +3,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from .downloader import DownloadError, download_song, search_song
+from .downloader import DependencyError, DownloadError, download_song, search_song
 from .parser import parse_song_list
 
 
@@ -31,6 +31,8 @@ def process_playlist_file(
             result = search_song(song, min_score=min_score)
             matches.append(result)
             print(f"  [OK] {song.query} -> {result.video_title} (score={result.score:.2f})")
+        except DependencyError as exc:
+            raise DownloadError(str(exc)) from exc
         except DownloadError as exc:
             errors.append(str(exc))
             print(f"  [ERR] {song.query}: {exc}")

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import re
 from pathlib import Path
 
@@ -11,9 +12,23 @@ class DownloadError(RuntimeError):
     pass
 
 
+class DependencyError(DownloadError):
+    pass
+
+
 def _safe_name(value: str) -> str:
     value = re.sub(r"[\\/*?:\"<>|]", "_", value)
     return re.sub(r"\s+", " ", value).strip()
+
+
+def _load_youtube_dl():
+    try:
+        module = importlib.import_module("yt_dlp")
+        return module.YoutubeDL
+    except ModuleNotFoundError as exc:
+        raise DependencyError(
+            "Не установлен пакет 'yt-dlp'. Установите зависимости: pip install -r requirements.txt"
+        ) from exc
 
 
 def search_song(song: SongRequest, min_score: float = 0.78) -> SearchResult:
@@ -23,9 +38,9 @@ def search_song(song: SongRequest, min_score: float = 0.78) -> SearchResult:
         "extract_flat": False,
     }
 
-    from yt_dlp import YoutubeDL
+    youtube_dl = _load_youtube_dl()
 
-    with YoutubeDL(ydl_opts) as ydl:
+    with youtube_dl(ydl_opts) as ydl:
         info = ydl.extract_info(f"ytsearch8:{song.query} official audio", download=False)
 
     entries = info.get("entries") or []
@@ -73,9 +88,9 @@ def download_song(result: SearchResult, output_dir: Path) -> Path:
     }
 
     url = f"https://www.youtube.com/watch?v={result.video_id}"
-    from yt_dlp import YoutubeDL
+    youtube_dl = _load_youtube_dl()
 
-    with YoutubeDL(ydl_opts) as ydl:
+    with youtube_dl(ydl_opts) as ydl:
         ydl.download([url])
 
     output_file = group_dir / f"{filename}.mp3"
