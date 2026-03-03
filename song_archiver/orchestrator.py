@@ -12,6 +12,7 @@ def process_playlist_file(
     workdir: str | Path = "downloads",
     archive_name: str = "songs_archive",
     min_score: float = 0.78,
+    proxy_url: str | None = None,
 ) -> Path:
     """Parse, validate all songs, download, then archive as zip.
 
@@ -28,7 +29,7 @@ def process_playlist_file(
 
     for song in songs:
         try:
-            result = search_song(song, min_score=min_score)
+            result = search_song(song, min_score=min_score, proxy_url=proxy_url)
             matches.append(result)
             print(f"  [OK] {song.query} -> {result.video_title} (score={result.score:.2f})")
         except DependencyError as exc:
@@ -40,7 +41,7 @@ def process_playlist_file(
     if errors:
         joined = "\n".join(errors)
         raise DownloadError(
-            "Строгая валидация не пройдена. Исправьте входной файл или снизьте --min-score.\n" + joined
+            "Строгая валидация не пройдена. Исправьте входной файл, прокси или снизьте --min-score.\n" + joined
         )
 
     downloads_dir = root / "songs"
@@ -49,7 +50,7 @@ def process_playlist_file(
     downloads_dir.mkdir(parents=True, exist_ok=True)
 
     for result in matches:
-        download_song(result, downloads_dir)
+        download_song(result, downloads_dir, proxy_url=proxy_url)
 
     archive_base = root / archive_name
     archive_path = Path(shutil.make_archive(str(archive_base), "zip", downloads_dir))

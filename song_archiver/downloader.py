@@ -31,17 +31,40 @@ def _load_youtube_dl():
         ) from exc
 
 
-def search_song(song: SongRequest, min_score: float = 0.78) -> SearchResult:
-    ydl_opts = {
-        "quiet": True,
-        "skip_download": True,
-        "extract_flat": False,
-    }
+def _with_proxy(options: dict, proxy_url: str | None) -> dict:
+    if proxy_url:
+        options["proxy"] = proxy_url
+    return options
+
+
+def _wrap_network_error(exc: Exception) -> DownloadError:
+    message = str(exc)
+    if "WinError 10054" in message or "Unable to download" in message or "TransportError" in message:
+        return DownloadError(
+            "Сетевая ошибка при обращении к YouTube. Проверьте прокси (--proxy) и доступ в интернет. "
+            f"Детали: {message}"
+        )
+    return DownloadError(message)
+
+
+def search_song(song: SongRequest, min_score: float = 0.78, proxy_url: str | None = None) -> SearchResult:
+    ydl_opts = _with_proxy(
+        {
+            "quiet": True,
+            "skip_download": True,
+            "extract_flat": False,
+            "retries": 3,
+        },
+        proxy_url,
+    )
 
     youtube_dl = _load_youtube_dl()
 
-    with youtube_dl(ydl_opts) as ydl:
-        info = ydl.extract_info(f"ytsearch8:{song.query} official audio", download=False)
+    try:
+        with youtube_dl(ydl_opts) as ydl:
+            info = ydl.extract_info(f"ytsearch8:{song.query} official audio", download=False)
+    except Exception as exc:  # noqa: BLE001
+        raise _wrap_network_error(exc) from exc
 
     entries = info.get("entries") or []
     if not entries:
@@ -72,26 +95,33 @@ def search_song(song: SongRequest, min_score: float = 0.78) -> SearchResult:
     return best
 
 
-def download_song(result: SearchResult, output_dir: Path) -> Path:
+def download_song(result: SearchResult, output_dir: Path, proxy_url: str | None = None) -> Path:
     group_dir = output_dir / _safe_name(result.song.group)
     group_dir.mkdir(parents=True, exist_ok=True)
 
     filename = _safe_name(result.song.title)
     target_template = str(group_dir / f"{filename}.%(ext)s")
 
-    ydl_opts = {
-        "format": "bestaudio/best",
-        "outtmpl": target_template,
-        "noplaylist": True,
-        "quiet": True,
-        "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"}],
-    }
+    ydl_opts = _with_proxy(
+        {
+            "format": "bestaudio/best",
+            "outtmpl": target_template,
+            "noplaylist": True,
+            "quiet": True,
+            "retries": 3,
+            "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"}],
+        },
+        proxy_url,
+    )
 
     url = f"https://www.youtube.com/watch?v={result.video_id}"
     youtube_dl = _load_youtube_dl()
 
-    with youtube_dl(ydl_opts) as ydl:
-        ydl.download([url])
+    try:
+        with youtube_dl(ydl_opts) as ydl:
+            ydl.download([url])
+    except Exception as exc:  # noqa: BLE001
+        raise _wrap_network_error(exc) from exc
 
     output_file = group_dir / f"{filename}.mp3"
     if not output_file.exists():

@@ -55,6 +55,18 @@ python main.py --interactive
 - `--output, -o` — рабочая папка (`downloads` по умолчанию);
 - `--archive-name` — имя zip без расширения;
 - `--min-score` — порог совпадения (0..1), по умолчанию `0.78`.
+- `--proxy` — прокси: `host:port` или полный URL `http://user:pass@host:port`.
+- `--proxy-user`, `--proxy-password` — логин/пароль прокси.
+
+
+### Пример запуска с прокси
+
+```bash
+python main.py --input songs.txt --output downloads --archive-name songs --min-score 0.80 \
+  --proxy 154.218.23.64:62794 --proxy-user FajEdqBYN --proxy-password CDYN99hjD
+```
+
+Если прокси не нужен, просто не указывайте эти параметры.
 
 ## Веб-интерфейс
 

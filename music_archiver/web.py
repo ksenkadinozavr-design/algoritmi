@@ -8,6 +8,7 @@ from flask import Flask, flash, redirect, render_template, request, send_file, u
 from song_archiver.downloader import DownloadError
 from song_archiver.orchestrator import process_playlist_file
 from song_archiver.parser import ParseError
+from main import _build_proxy_url
 
 
 def create_app() -> Flask:
@@ -24,6 +25,9 @@ def create_app() -> Flask:
         songs_text = request.form.get("songs_text", "").strip()
         min_score_raw = request.form.get("min_score", "0.78").strip()
         archive_name = request.form.get("archive_name", "songs_archive").strip() or "songs_archive"
+        proxy = request.form.get("proxy", "").strip()
+        proxy_user = request.form.get("proxy_user", "").strip()
+        proxy_password = request.form.get("proxy_password", "").strip()
 
         if not songs_text:
             flash("Добавьте список песен в поле текста.", "error")
@@ -51,6 +55,7 @@ def create_app() -> Flask:
                 workdir=app.config["ARCHIVE_ROOT"],
                 archive_name=archive_name,
                 min_score=min_score,
+                proxy_url=_build_proxy_url(proxy, proxy_user, proxy_password),
             )
         except (ParseError, DownloadError) as exc:
             flash(str(exc), "error")

@@ -20,6 +20,9 @@ def build_parser() -> argparse.ArgumentParser:
         default=0.78,
         help="Порог строгой валидации [0..1], выше = строже",
     )
+    parser.add_argument("--proxy", help="Прокси в формате host:port или http://user:pass@host:port")
+    parser.add_argument("--proxy-user", help="Логин для прокси (если нужен)")
+    parser.add_argument("--proxy-password", help="Пароль для прокси (если нужен)")
     parser.add_argument(
         "--interactive",
         action="store_true",
@@ -35,6 +38,23 @@ def _normalize_path_value(value: str) -> str:
     return normalized
 
 
+def _build_proxy_url(proxy: str | None, user: str | None = None, password: str | None = None) -> str | None:
+    if not proxy:
+        return None
+
+    proxy = _normalize_path_value(proxy)
+    if not proxy:
+        return None
+
+    if proxy.startswith("http://") or proxy.startswith("https://"):
+        return proxy
+
+    if user and password:
+        return f"http://{user}:{password}@{proxy}"
+
+    return f"http://{proxy}"
+
+
 def run_interactive(args: argparse.Namespace) -> argparse.Namespace:
     print("=== Song Archiver ===")
     if not args.input:
@@ -43,6 +63,15 @@ def run_interactive(args: argparse.Namespace) -> argparse.Namespace:
         custom_output = input("Директория для результатов [downloads]: ").strip()
         if custom_output:
             args.output = _normalize_path_value(custom_output)
+
+    proxy_input = input("Прокси host:port (Enter если без прокси): ").strip()
+    if proxy_input:
+        args.proxy = _normalize_path_value(proxy_input)
+        proxy_user = input("Прокси логин (Enter если не нужен): ").strip()
+        if proxy_user:
+            args.proxy_user = proxy_user
+            args.proxy_password = input("Прокси пароль: ").strip()
+
     custom_archive = input(f"Имя архива [{args.archive_name}]: ").strip()
     if custom_archive:
         args.archive_name = custom_archive
@@ -67,12 +96,15 @@ def main() -> int:
     if not args.input:
         parser.error("Укажите --input путь к файлу")
 
+    proxy_url = _build_proxy_url(args.proxy, args.proxy_user, args.proxy_password)
+
     try:
         archive = process_playlist_file(
             input_file=Path(args.input),
             workdir=Path(args.output),
             archive_name=args.archive_name,
             min_score=args.min_score,
+            proxy_url=proxy_url,
         )
     except DownloadError as exc:
         print(f"Ошибка: {exc}")
